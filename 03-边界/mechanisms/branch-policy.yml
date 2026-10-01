@@ -1,0 +1,54 @@
+# 发版分支只接受从集成分支快进。
+# 放在哪里：<your-repo>/.github/workflows/branch-policy.yml
+#
+# 两条分支的分工：dev 是唯一集成线，所有功能和修复 PR 回 dev；main 是发版线，只 fast-forward 到 dev 上验证过的同一个提交。
+# 要改的地方：
+#   1. 分支名 dev、main 换成你的集成分支和发版分支；
+#   2. 在 GitHub 的分支保护里，把 promotion-ready 登记为 main 的必需检查，并开启“管理员也受约束”（enforce_admins）；
+#      登记后，main 上只能推送“已经在 dev 上通过 promotion-ready”的提交，任何直推或 cherry-pick 出的新提交都没有这个状态，会被拒绝。
+#      同时把 promotion-ready 写进 <your-repo>/.github/branch-protection.expected.json 里 main 的列表。
+#   3. main-pr-source 只拦截“从别的分支向 main 开 PR”。如果你发版用本地 git merge --ff-only 再推送，这一项只做参考，可以不登记为必需检查。
+#
+# 发版时的本地命令（写进你的发版清单，切换分支用 git switch）：
+#   git switch main && git pull --ff-only origin main && git merge --ff-only dev && git push origin main
+
+name: Branch Policy
+
+on:
+  push:
+    branches: [dev]
+  pull_request:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  promotion-ready:
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/dev' }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - name: Verify main has no commits outside dev
+        run: |
+          git fetch --no-tags origin main
+          if ! git merge-base --is-ancestor origin/main HEAD; then
+            echo '::error::dev does not contain the complete main history. Reconcile main into dev before continuing.'
+            git log --oneline --left-right --boundary HEAD...origin/main -30
+            exit 1
+          fi
+
+  main-pr-source:
+    if: ${{ github.event_name == 'pull_request' }}
+    runs-on: ubuntu-latest
+    steps:
+      - name: Allow only dev promotion pull requests
+        env:
+          HEAD_REF: ${{ github.head_ref }}
+        run: |
+          if [ "$HEAD_REF" != 'dev' ]; then
+            echo "::error::main accepts release promotion only from dev; got $HEAD_REF"
+            exit 1
+          fi

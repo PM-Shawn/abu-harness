@@ -1,0 +1,184 @@
+# 放在哪里：<your-repo>/.github/workflows/ci.yml
+#
+# 做法：门禁分成几个并行 job，再由一个汇总 job `check` 检查它们全部成功。
+# 分支保护里只登记 `check` 这一个必需检查，以后增减并行 job 不用改分支保护。
+#
+# 各 job 运行的 npm 脚本（lint、typecheck、test:coverage、test:infra、build）都在
+# 同目录的 verify-scripts.jsonc 里；security-test job 用的 test:security 在它的可选脚本里。
+#
+# 要改的地方：
+#   1. on.push.branches / on.pull_request.branches：示例里 dev 是集成分支、main 是发版分支，换成你的。
+#   2. 各 job 的 run 命令：换成你项目里对应的 npm 脚本名。
+#   3. 往 check 里增加或删除一个 job 时，下面四处要一起改，少改一处 scripts/ci-gate.test.mjs 就会失败：
+#        a. jobs 下的 job 本身；
+#        b. check 的 needs 数组；
+#        c. check 的 RESULTS 里那一行，写法固定为 <job 名>=${{ needs['<job 名>'].result }}；
+#        d. scripts/ci-gate.test.mjs 的 GATE_JOBS 常量。
+#      文件里注释掉的 security-test job（可选）就按这四处启用。
+#   4. 放在 check 之外、只作参考的 job（例如文件末尾的 audit）：
+#      把 job 名登记进 scripts/ci-gate.test.mjs 的 ADVISORY_JOBS 常量。
+#   5. 在 GitHub 仓库 Settings → Branches 里，把 `check` 登记为必需检查，
+#      并打开 "Do not allow bypassing the above settings"（enforce_admins）。
+
+name: CI
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+    # PR 正文和 label 会影响豁免判断时，编辑正文、增减 label 也要重新运行
+    types: [opened, synchronize, reopened, edited, labeled, unlabeled]
+
+# 同一个 PR 再次推送时取消旧的运行；集成分支上的运行不取消，
+# 合入后的那一次运行是“集成分支是否健康”的信号
+concurrency:
+  group: ${{ github.workflow }}-${{ github.event_name == 'pull_request' && github.ref || github.sha }}
+  cancel-in-progress: ${{ github.event_name == 'pull_request' }}
+
+jobs:
+  lint:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        id: install
+        run: npm ci
+      - name: Lint
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run lint
+
+  typecheck:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        id: install
+        run: npm ci
+      - name: Type check
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run typecheck
+
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        id: install
+        run: npm ci
+      # 用了隔离区期限检查（05-进化 quarantine/）时，把 ci-quarantine-asof.yml 里的一步加在这里
+      # 覆盖率低于 vitest.config.ts 里的阈值时，这一步退出码非零
+      - name: Test with coverage
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run test:coverage
+      # 门禁脚本自己的测试（scripts/ 下全部 *.test.mjs）
+      - name: Test-infra scripts (node:test)
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run test:infra
+      # 报告即使在测试失败时也上传，方便看失败原因
+      - name: Upload coverage report
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-report
+          path: coverage/
+          retention-days: 14
+
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        id: install
+        run: npm ci
+      - name: Build
+        if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+        run: npm run build
+
+  # （可选）安全边界测试：权限、文件系统、进程调用等边界的回归测试。
+  # 单独成一个 job 并汇入 check，安全边界的回归会拦住 PR。
+  # 启用时去掉下面的注释，并按“要改的地方”第 3 条同步改 needs、RESULTS、GATE_JOBS，
+  # 再把 verify-scripts.jsonc 可选脚本里的 test:security 加进 package.json。
+  # security-test:
+  #   runs-on: ubuntu-latest
+  #   timeout-minutes: 20
+  #   permissions:
+  #     contents: read
+  #   steps:
+  #     - uses: actions/checkout@v7
+  #     - uses: actions/setup-node@v7
+  #       with:
+  #         node-version: 24
+  #         cache: npm
+  #     - name: Install dependencies
+  #       id: install
+  #       run: npm ci
+  #     - name: Security-boundary tests
+  #       if: ${{ !cancelled() && steps.install.outcome == 'success' }}
+  #       run: npm run test:security
+
+  # 汇总 job，名字 `check` 就是分支保护登记的必需检查。
+  # `if: always()` 不能删：没有它，上游 job 失败时这个 job 会被跳过，
+  # 而被跳过的必需检查可能被当作通过，门禁就被悄悄绕开了。
+  check:
+    needs: [lint, typecheck, test, build]
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Require every gate job to have succeeded
+        env:
+          RESULTS: >-
+            lint=${{ needs['lint'].result }}
+            typecheck=${{ needs['typecheck'].result }}
+            test=${{ needs['test'].result }}
+            build=${{ needs['build'].result }}
+        run: |
+          echo "gate results: $RESULTS"
+          for pair in $RESULTS; do
+            if [ "${pair#*=}" != "success" ]; then
+              echo "::error::A required gate job did not succeed — $RESULTS"
+              exit 1
+            fi
+          done
+          echo "All gate jobs succeeded."
+
+  # 只作参考的 job 放在 check 之外，并用 continue-on-error 标明。
+  # 它红了不会拦住合并，所以不要把它当成门禁。确定要拦住时，按“要改的地方”第 3 条把它并入 check。
+  # 启用时把 audit 登记进 scripts/ci-gate.test.mjs 的 ADVISORY_JOBS。
+  # audit:
+  #   runs-on: ubuntu-latest
+  #   continue-on-error: true
+  #   steps:
+  #     - uses: actions/checkout@v7
+  #     - run: npm audit --omit=dev --audit-level=high

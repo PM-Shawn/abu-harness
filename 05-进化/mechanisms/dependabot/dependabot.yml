@@ -1,0 +1,35 @@
+# Dependabot 配置。
+# 放在哪里：<your-repo>/.github/dependabot.yml
+# 每月一次，按 patch / minor 分组开 PR，目标分支是集成分支。
+# 已冻结、不会再发布的目录不要扫描，否则只会制造没人处理的 PR。
+#
+# 要改的地方：两处 target-branch 的 dev 是集成分支，换成你的；按项目实际加减 package-ecosystem。
+version: 2
+updates:
+  - package-ecosystem: npm
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: monthly
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      npm-patch:
+        patterns: ["*"]
+        update-types: ["patch"]
+      npm-minor:
+        patterns: ["*"]
+        update-types: ["minor"]
+
+  - package-ecosystem: github-actions
+    directory: /
+    target-branch: dev
+    schedule:
+      interval: monthly
+    commit-message:
+      prefix: "chore(ci)"
+    # Actions 版本升级影响面小，全部合成一组
+    groups:
+      actions-all:
+        patterns: ["*"]

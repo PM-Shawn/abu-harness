@@ -1,0 +1,9 @@
+{
+  "dev": [
+    "check",
+    "e2e"
+  ],
+  "main": [
+    "check"
+  ]
+}

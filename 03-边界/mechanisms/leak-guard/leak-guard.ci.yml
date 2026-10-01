@@ -1,0 +1,25 @@
+# CI job 片段：公开仓泄露检查。
+# 放在哪里：把下面的 leak-guard job 加进 <your-repo>/.github/workflows/ci.yml 的 jobs 下
+# （ci.yml 见 02-判定/mechanisms/ci-gate.yml）。
+#
+# 只运行不汇入必需检查时，它红了也能合并。把它并入汇总 job `check`，要同时改三处，
+# 少改一处 scripts/ci-gate.test.mjs 就会失败：
+#   1. check 的 needs 数组加上 leak-guard；
+#   2. check 的 RESULTS 加一行：leak-guard=${{ needs['leak-guard'].result }}
+#      （必须用 needs['leak-guard'] 这种写法，ci-gate.test.mjs 按这个写法核对）；
+#   3. scripts/ci-gate.test.mjs 的 GATE_JOBS 常量加上 'leak-guard'。
+#
+# 这个 job 不安装依赖：检查脚本是纯 bash，runner 自带的 npm 就能运行 npm run check:leak。
+# 它读取的是检出后的工作区，浅克隆（actions/checkout 默认）就够用。
+# 要同时运行检查脚本自己的测试时，去掉最后一步的注释（test:leak-guard 见 leak-guard.test.sh 开头的说明）。
+leak-guard:
+  runs-on: ubuntu-latest
+  timeout-minutes: 10
+  permissions:
+    contents: read
+  steps:
+    - uses: actions/checkout@v7
+    - name: Public repo leak guard
+      run: npm run check:leak
+    # - name: Leak guard self-test
+    #   run: npm run test:leak-guard

@@ -1,0 +1,77 @@
+// 放在哪里：这是 package.json 的片段，把下面的字段合并进 <your-repo>/package.json（合并时去掉注释）。
+// 要装的依赖、前置配置（eslint.config.mjs、tsconfig.json、vitest.config.ts、.gitignore）和安装顺序见材料根目录的 INSTALL.md。
+//
+// 三个门禁命令的名字固定，Agent 的完成条件（例如 /goal 模板）直接写这几个名字：
+//   verify:quick  小步自检：lint + 类型检查 + 只跑有改动的测试，目标 30 秒内，不查覆盖率
+//   verify:full   完整门禁：lint + 类型检查 + 全量测试 + 覆盖率阈值
+//   verify        等于 verify:full，“做完了”只认它的退出码为 0
+// 每一步用 && 串起来，任何一步失败，后面的步骤都不运行，整条命令退出码非零。
+//
+// 其余脚本：
+//   prepare       不带包名的 npm install 和 npm ci 会运行它，由 husky 生成 .husky/_/ 并设置 core.hooksPath。
+//                 带包名的安装（npm install --save-dev <包名>）不运行它，第一次装完依赖后要运行一次 npx husky，
+//                 并用 git config core.hooksPath 确认输出 .husky/_ 。
+//   test:infra   运行 scripts/ 下全部 *.test.mjs（门禁脚本自己的测试，用 node:test 写）。
+//                 新增门禁脚本的测试时放进 scripts/ 并以 .test.mjs 结尾，不用改这一行。
+//                 这些文件不归 vitest 运行：vitest 配置的 include 不要包含 scripts/**/*.test.mjs。
+//   build         CI 的 build job 运行它（见 ci-gate.yml）。
+//   release:check 发版预检（见 release-preflight.mjs）。
+//
+// 要改的地方：
+//   1. build：换成你的构建命令。示例用 tsc 把结果输出到 dist/，dist/ 要写进 .gitignore。
+//   2. typecheck：用了 TypeScript project references 的项目改成 "tsc -b"，
+//      它每次运行都会写出 *.tsbuildinfo，这个文件要写进 .gitignore。
+//   3. lint-staged 的文件范围：换成你的源码目录。
+//   4. 文件末尾的可选脚本：用到对应机制时，把那一行去掉注释并入 scripts。
+{
+  "scripts": {
+    "prepare": "husky",
+    "lint": "eslint . --max-warnings 0",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:coverage": "vitest run --coverage",
+    "test:infra": "node --test \"scripts/*.test.mjs\"",
+    "build": "tsc --outDir dist",
+    "verify:quick": "npm run lint && npm run typecheck && vitest run --changed",
+    "verify:full": "npm run lint && npm run typecheck && npm run test:coverage",
+    "verify": "npm run verify:full",
+    "release:check": "node scripts/release-preflight.mjs"
+
+    // ── 可选脚本：用到对应机制时才加 ──
+    //
+    // 生成物新鲜度检查（02-判定“生成物必须与源码一致”）。加上后在 verify:full 的 typecheck 后面串上 && npm run gen:check
+    // "gen:check": "node scripts/generate.mjs --check",
+    //
+    // 安全边界测试（ci-gate.yml 里注释掉的 security-test job 运行它）
+    // "test:security": "vitest run --config vitest.security.config.ts",
+    //
+    // 真实应用的 E2E（e2e-gate.yml 运行它）
+    // "test:e2e": "playwright test",
+    //
+    // 公开仓泄露检查（03-边界 leak-guard/）。加上后把 npm run check:leak 放在 verify:full 的第一步
+    // "check:leak": "bash scripts/public-leak-guard.sh",
+    // "test:leak-guard": "bash scripts/leak-guard.test.sh \"$PWD/.scratch/leak-guard-test-$(date -u +%Y%m%dT%H%M%SZ)\"",
+    //
+    // 源文件 NUL 字节检查（03-边界 check-nul-bytes.py）。可以串进 verify:full，也可以只放进 CI 的 lint job
+    // "check:nul": "python3 scripts/check-nul-bytes.py",
+    //
+    // 测试清单（04-记录 test-inventory.mjs）。加上后在 verify:full 的 typecheck 后面串上 && npm run test:inventory:check
+    // "test:inventory": "node scripts/test-inventory.mjs --write",
+    // "test:inventory:check": "node scripts/test-inventory.mjs --check",
+    //
+    // 对抗清单引用自检（04-记录 check-checklist-refs.mjs）。建议放进 CI 的 test job，接在 test:infra 后面
+    // "check:checklist-refs": "node scripts/check-checklist-refs.mjs",
+    //
+    // 隔离测试单独运行（05-进化 quarantine/）
+    // "test:quarantine": "vitest run --config vitest.quarantine.config.ts --passWithNoTests",
+    //
+    // 退役命令（01-方向 retired-command.mjs），名字换成你的旧入口
+    // "old:dev": "node scripts/retired-command.mjs"
+  },
+  "lint-staged": {
+    "src/**/*.{ts,tsx}": [
+      "eslint --max-warnings 0",
+      "vitest related --run --maxWorkers=2"
+    ]
+  }
+}

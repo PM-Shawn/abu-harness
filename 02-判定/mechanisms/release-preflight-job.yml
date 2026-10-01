@@ -1,0 +1,56 @@
+# 放在哪里：<your-repo>/.github/workflows/release.yml
+#
+# 做法：预检是发版 workflow 的第一个 job，后面所有构建、签名、上传的 job 都写 `needs: preflight`。
+# 预检失败，整个发版变红，不产生任何安装包，也不写任何线上文件。
+#
+# 要改的地方：
+#   1. on.push.tags 的匹配规则：换成你的版本 tag 格式。
+#   2. 构建 job：换成你自己的构建步骤，保留 needs: preflight。
+#   3. 如果没有“手动触发、只出内部候选包”的用法，可以删掉 workflow_dispatch 和对应分支。
+
+name: Release
+
+on:
+  push:
+    tags: ['v*']
+  workflow_dispatch:
+    inputs:
+      candidate_version:
+        description: 'Version for a private candidate build (never published)'
+        required: true
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      # 需要完整历史和 origin/main，才能证明正式 tag 指向的提交已经在发版分支上
+      - uses: actions/checkout@v7
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      # 预检脚本用 Markdown 解析库读取更新日志，必须先安装依赖
+      - name: Install dependencies
+        run: npm ci
+      - name: Validate tag commit, version, and changelog
+        env:
+          CANDIDATE_VERSION: ${{ github.event_name == 'workflow_dispatch' && inputs.candidate_version || github.ref_name }}
+        run: |
+          # GITHUB_TOKEN 读不到分支保护，由发版人在本地运行 npm run release:check 完成那一项。
+          # 只有手动触发的候选构建可以跳过 tag 所在提交的检查。
+          if [ "$GITHUB_EVENT_NAME" = "workflow_dispatch" ]; then
+            node scripts/release-preflight.mjs --tag "$CANDIDATE_VERSION" --skip-branch-protection --skip-tag-commit-check
+          else
+            node scripts/release-preflight.mjs --tag "$CANDIDATE_VERSION" --skip-branch-protection
+          fi
+
+  build:
+    needs: preflight
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - run: echo "replace with your build, sign, and publish steps"

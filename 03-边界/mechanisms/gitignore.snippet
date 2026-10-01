@@ -1,0 +1,39 @@
+# 放在哪里：把下面几行追加到 <your-repo>/.gitignore。每个会有 Agent 工作的仓库都要加，包括子仓库。
+
+# Agent 的中间结果、日志、截图证据统一放在仓库根目录的 .scratch/ 下，不进版本库。
+# 放在仓库里（而不放 /tmp）的原因：机器重启或系统清理后，交付说明里引用的证据仍然在。
+# 门禁日志由 scripts/run-gate.sh 写在 .scratch/gate-logs/ 下。
+.scratch/
+
+# 依赖、门禁和构建产生的文件。少了这几行，运行一次 npm run verify 之后 git status 就不为空，
+# “verify 退出码为 0 且 git status 为空”这个完成条件永远达不到。
+node_modules/
+# vitest --coverage 的输出目录
+coverage/
+# 构建输出（verify-scripts.jsonc 的 build 示例输出到 dist/）
+dist/
+# tsc -b 每次运行都会写出的增量信息文件
+*.tsbuildinfo
+
+# 本机密钥与环境变量：只放在本机，不提交。
+.env
+.env.local
+.env.*.local
+
+# 可选：superpowers 插件的逐任务台账目录。想让台账跨机器、跨工具可见时，删掉这一行，改为提交到 git。
+.superpowers/
+
+# ─────────────────────────────────────────────
+# 可选：文档仓库用“默认全部忽略、逐条放行”的写法。
+# 适合放了大量内部文档、只有少数文件可以共享的工作区仓库：新文件默认不进版本库，
+# 必须有人明确加一行 ! 放行，防止含敏感内容的文件被顺手提交。
+# 使用时把下面几行取消注释，并把放行的文件换成你自己的。
+#
+# /*
+# !/.gitignore
+# !/AGENTS.md
+# !/CLAUDE.md
+# !/docs/
+# /docs/*
+# !/docs/<shared-spec>.md
+# .scratch/

@@ -1,0 +1,7 @@
+# husky 的 commit-msg 钩子：提交信息不符合 commitlint.config.mjs 时阻止提交。
+# 放在哪里：<your-repo>/.husky/commit-msg，放好后运行 chmod +x .husky/commit-msg。
+#
+# 钩子生效的前提与 pre-commit 相同：git config core.hooksPath 输出 .husky/_ 。
+# 这个设置由不带包名的 npm install / npm ci（运行 "prepare": "husky"）或 npx husky 生成，
+# 每个新克隆、每个 worktree 都要运行一次；没有它时 git 不运行钩子，也不提示。
+npx --no -- commitlint --edit "$1"

@@ -1,0 +1,76 @@
+# 放在哪里：<your-repo>/.github/workflows/e2e.yml（可选，有真实应用的 E2E 时使用）
+#
+# 做法：真实应用的 E2E 分到几台机器上并行运行（每台机器单进程，避免同一台机器上
+# 同时启动多个应用实例互相争抢），再由汇总 job `e2e` 检查全部分片成功。
+# 分支保护里登记的是汇总 job 的名字，分片数量以后可以随意调整。
+#
+# 要改的地方：
+#   1. on.push.branches / on.pull_request.branches：示例里 dev 是集成分支、main 是发版分支，换成你的。
+#   2. runs-on：换成能运行你的应用的系统（桌面应用常用 macos-*）。
+#   3. matrix.shard 和 --shard=<分片序号>/3：分片数量要一致。
+#   4. run 命令：npm run test:e2e 由你的项目提供（verify-scripts.jsonc 的可选脚本里有示例），
+#      换成你的 E2E 命令。Playwright 配置里保持 retries: 0，
+#      并设 forbidOnly: !!process.env.CI，失败要让人看见，不要靠重试盖住。
+#   5. 汇总 job 的名字 `e2e`：与分支保护登记的必需检查名一致，
+#      也要写进 .github/branch-protection.expected.json。
+
+name: E2E Tests
+
+on:
+  push:
+    branches: [dev, main]
+  pull_request:
+    branches: [dev, main]
+
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  e2e-shard:
+    runs-on: macos-14
+    timeout-minutes: 60
+    strategy:
+      # 一轮里把所有失败都暴露出来，一个分片失败不取消其他分片
+      fail-fast: false
+      matrix:
+        shard: [1, 2, 3]
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+      - name: Install dependencies
+        run: npm ci
+      - name: Run E2E tests
+        run: npm run test:e2e -- --shard=${{ matrix.shard }}/3
+        env:
+          CI: true
+      - name: Upload E2E traces
+        uses: actions/upload-artifact@v4
+        if: failure()
+        with:
+          name: e2e-results-shard-${{ matrix.shard }}
+          path: test-results/
+          retention-days: 7
+
+  # 汇总 job。`if: always()` 不能删：没有它，分片失败时汇总会被跳过，
+  # 被跳过的必需检查可能被当作通过。
+  e2e:
+    needs: e2e-shard
+    if: always()
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    steps:
+      - name: Require every E2E shard to have succeeded
+        env:
+          SHARDS: ${{ needs['e2e-shard'].result }}
+        run: |
+          echo "e2e-shard result: $SHARDS"
+          if [ "$SHARDS" != "success" ]; then
+            echo "::error::E2E shards did not all succeed ($SHARDS)"
+            exit 1
+          fi

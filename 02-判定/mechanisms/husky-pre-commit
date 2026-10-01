@@ -1,0 +1,21 @@
+# 放在哪里：<your-repo>/.husky/pre-commit，放好后运行 chmod +x .husky/pre-commit。
+# 全材料只有这一份 pre-commit；其他机制要在提交前运行的检查，都加在这个文件里。
+#
+# 钩子生效的前提：git config core.hooksPath 输出 .husky/_ 。
+#   - 这个设置和 .husky/_/ 目录由 package.json 的 "prepare": "husky" 在不带包名的 npm install / npm ci 时生成。
+#   - npm install --save-dev husky lint-staged 这种带包名的安装不运行 prepare，装完要再运行一次 npx husky。
+#   - 每个新克隆、每个 worktree 都要运行过 npm ci（或 npx husky）。
+#   没有这个设置时 git 不运行任何钩子，也不打印任何提示，不合格的提交会照常成功。
+#
+# lint-staged 的两个参数都不能省：
+#   --no-hide-partially-staged：运行期间不把部分暂存文件里未暂存的改动藏起来。
+#     钩子被外部超时强行终止时，藏起来的改动来不及恢复，会从工作区消失。
+#   --no-stash：不创建备份 stash，钩子被强行终止时不会留下孤立的备份 stash。
+# 下面的检查都不改文件（eslint 不带 --fix），所以这两个机制对我们没有用处；
+# 代价是部分暂存的文件会整个被检查，比丢失未提交的改动划算。
+#
+# 要改的地方：
+#   用了公开仓泄露检查（03-边界 leak-guard/）时，去掉下一行的注释。它排在 lint-staged 前面，
+#   检查整个扫描目录（包括未暂存、未跟踪的文件），用时不到一秒。
+# npm run check:leak
+npx lint-staged --no-stash --no-hide-partially-staged

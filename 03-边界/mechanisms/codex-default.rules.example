@@ -1,0 +1,26 @@
+# Codex 命令放行表示例。
+# 放在哪里：~/.codex/rules/default.rules。只复制下面的 prefix_rule 行，按需增删。
+# 作者本机的 default.rules 里全部是 prefix_rule 行，没有注释行；带 # 的注释行没有在 Codex CLI 上验证过，
+# 所以这些说明文字不要一起复制进去。行格式取自作者 2026-09 使用的 Codex CLI 自动生成的文件，
+# 你的版本生成的格式不同时，以你本机 default.rules 里已有的行为准。
+#
+# 每行一条 prefix_rule：命令的开头几个词与 pattern 完全相同时，按 decision 处理。
+# 作者的实际放行表是在日常使用中逐条点“总是允许”积累起来的，全部是 allow。
+#
+# 建议只放行只读或只影响本机工作区的命令。
+# 提交、推送、合并 PR、写 /tmp 之类的命令不要放进来，让 Codex 按你的审批设置先询问；
+# 否则“不自动提交推送”“不读写 /tmp”这些规则在 Codex 侧就只靠模型自觉。
+#
+# 改完后怎样确认生效：重新启动 Codex，让它运行一条表里的命令（例如 git status），不再询问；
+# 再让它运行一条表外的命令（例如 git push），仍然询问。
+
+prefix_rule(pattern=["git", "status"], decision="allow")
+prefix_rule(pattern=["git", "diff"], decision="allow")
+prefix_rule(pattern=["git", "log"], decision="allow")
+prefix_rule(pattern=["git", "remote", "-v"], decision="allow")
+prefix_rule(pattern=["gh", "pr", "view"], decision="allow")
+prefix_rule(pattern=["gh", "pr", "diff"], decision="allow")
+prefix_rule(pattern=["gh", "auth", "status"], decision="allow")
+prefix_rule(pattern=["npm", "run", "verify"], decision="allow")
+prefix_rule(pattern=["npm", "run", "lint"], decision="allow")
+prefix_rule(pattern=["npm", "test"], decision="allow")

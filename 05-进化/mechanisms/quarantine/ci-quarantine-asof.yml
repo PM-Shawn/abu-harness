@@ -1,0 +1,7 @@
+# CI 片段：在运行测试之前注入当天日期，让隔离区期限检查的时钟每次运行都前进。
+# 放在哪里：<your-repo>/.github/workflows/ci.yml 的 test job 里，位置在运行 vitest 的步骤之前
+# （02-判定/mechanisms/ci-gate.yml 的 test job 里留了一行注释标出这个位置）。
+# 没有这一步时，检查只会用代码里的固定日期，隔离的测试永远不会过期。
+- name: Set quarantine SLA as-of date
+  shell: bash
+  run: echo "QUARANTINE_ASOF=$(date -u +%F)" >> "$GITHUB_ENV"

@@ -1,0 +1,45 @@
+# 低风险 Dependabot PR 自动合并。
+# 放在哪里：<your-repo>/.github/workflows/dependabot-auto-merge.yml
+#
+# 它只是给 PR 开启 auto-merge，真正合并要等全部必需检查通过，所以会等 CI 变绿，不会盲目合并。
+# 前提（缺一项就会变成直接合并或者一直不合并）：
+# 1. 仓库设置里打开 “Allow auto-merge”；
+# 2. 集成分支有分支保护，并登记了必需检查（例如 check）。
+#    集成分支没有分支保护时，gh pr merge --auto 会立即合并。
+#
+# 要改的地方：if 条件里的 'dev' 是集成分支，换成你的。
+name: Dependabot auto-merge
+
+on: pull_request
+
+permissions:
+  contents: write
+  pull-requests: write
+
+jobs:
+  auto-merge:
+    runs-on: ubuntu-latest
+    # 同时限定发起人和目标分支：Dependabot 的安全更新 PR 可能指向默认分支，
+    # 那类 PR 不能绕开唯一的集成分支
+    if: >-
+      github.actor == 'dependabot[bot]' &&
+      github.event.pull_request.base.ref == 'dev'
+    steps:
+      - name: Fetch Dependabot metadata
+        id: meta
+        uses: dependabot/fetch-metadata@v3
+        with:
+          github-token: "${{ secrets.GITHUB_TOKEN }}"
+
+      # 只自动合并两类低风险升级：
+      #   - 任何 patch 级别升级（按 semver 不改接口）
+      #   - 全部 GitHub Actions 版本升级（影响面小，而且有 CI 把关）
+      # 分组 PR 报告的是组内最高的升级级别，混进一个 minor 就不匹配，留给人审。
+      - name: Enable auto-merge for low-risk updates
+        if: >-
+          steps.meta.outputs.update-type == 'version-update:semver-patch' ||
+          steps.meta.outputs.package-ecosystem == 'github_actions'
+        run: gh pr merge --auto --squash "$PR_URL"
+        env:
+          PR_URL: ${{ github.event.pull_request.html_url }}
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}

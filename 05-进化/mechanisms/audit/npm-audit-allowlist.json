@@ -1,0 +1,11 @@
+{
+  "$comment": "已接受的 npm audit 漏洞（上游没有修复版本）。每条必须有 ghsa、package、reason、expires（YYYY-MM-DD）；过期后 npm-audit-check.mjs 让 CI 失败，逼着重新审一遍。下面是格式示例，GHSA 编号与包名是虚构的，复制后换成真实条目或清空 entries。",
+  "entries": [
+    {
+      "ghsa": "GHSA-xxxx-xxxx-xxxx",
+      "package": "example-parser",
+      "reason": "某种文件格式解析的 DoS。该包没有修复版本（写明查证日期）；只经 example-exporter 间接引入，且 example-exporter 的构建产物从不加载它（写明怎么查证的）。",
+      "expires": "2026-12-31"
+    }
+  ]
+}

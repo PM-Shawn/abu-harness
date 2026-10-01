@@ -1,0 +1,27 @@
+# CI job 片段：生产依赖漏洞扫描，由 npm-audit-check.mjs 判定结果。
+# 放在哪里：把下面的 audit job 加进 <your-repo>/.github/workflows/ci.yml 的 jobs 下
+# （ci.yml 见 02-判定/mechanisms/ci-gate.yml）；检查脚本放在 <your-repo>/scripts/npm-audit-check.mjs，
+# 允许清单放在 <your-repo>/.github/npm-audit-allowlist.json。
+#
+# 加进 ci.yml 之后，scripts/ci-gate.test.mjs 要求每个 job 都登记过，二选一：
+#   - 只作参考（红了不拦合并）：把 'audit' 加进 scripts/ci-gate.test.mjs 的 ADVISORY_JOBS 常量。
+#   - 要拦住合并：并入汇总 job `check`，同时改三处——check 的 needs 数组加上 audit；
+#     check 的 RESULTS 加一行 audit=${{ needs['audit'].result }}；
+#     scripts/ci-gate.test.mjs 的 GATE_JOBS 常量加上 'audit'。
+#
+# 注意：`| tee` 会让 shell 报告 tee 的退出码，所以用 PIPESTATUS[0] 取回脚本自己的退出码。
+audit:
+  runs-on: ubuntu-latest
+  steps:
+    - uses: actions/checkout@v7
+    - uses: actions/setup-node@v7
+      with:
+        node-version: 24
+    - name: npm audit (production deps, high+, allowlist-aware)
+      shell: bash
+      run: |
+        # npm audit 发现任何问题都会返回非零，这里交给检查脚本判定
+        npm audit --omit=dev --json > audit.json || true
+        node scripts/npm-audit-check.mjs audit.json | tee -a "$GITHUB_STEP_SUMMARY"
+        status=${PIPESTATUS[0]}
+        exit "$status"

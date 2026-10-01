@@ -1,0 +1,70 @@
+# 改动行覆盖率门禁（GitHub Actions workflow）。
+# 放在哪里：<your-repo>/.github/workflows/diff-coverage.yml
+#
+# 做法：vitest 生成 Cobertura 格式的覆盖率报告（coverage/cobertura-coverage.xml），
+# 第三方工具 diff-cover 读取 git diff 与这份报告，只统计本 PR 新增或修改的行，
+# 被测试执行到的比例低于 80% 时以非零退出码结束。diff-cover 同样支持 lcov.info。
+#
+# 豁免：PR 带有 gate:changed-lines-exempt label 时跳过检查，并在 job 摘要里写一条提示；
+# 豁免理由由人写在 PR 正文里，由审阅人读，workflow 不读取正文。
+#
+# 要改的地方：
+# 1. branches：示例里 dev 是集成分支，换成你的；
+# 2. 豁免 label 名（两处 if 条件与摘要里的文字）；不需要豁免就删掉两处 if 里的 label 判断和最后一步；
+# 3. node-version、覆盖率命令（test:coverage 见 02-判定/mechanisms/verify-scripts.jsonc）；
+# 4. vitest.config.ts 的 coverage.reporter 里要有 'cobertura'（见同目录 vitest.coverage-thresholds.ts）；
+# 5. diff-cover 的版本号；
+# 6. 要让它真正拦住合并，把 diff-coverage 登记为分支保护的必需检查，
+#    并写进 <your-repo>/.github/branch-protection.expected.json。
+name: Diff coverage
+
+on:
+  pull_request:
+    branches: [dev]
+    # 增减 label 后也要重新判定
+    types: [opened, synchronize, reopened, labeled, unlabeled]
+
+permissions:
+  contents: read
+
+jobs:
+  diff-coverage:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+        with:
+          # diff-cover 要对比 base 分支，必须取完整历史
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 24
+          cache: npm
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - run: npm ci
+
+      - name: Install diff-cover
+        run: pip install diff-cover==10.6.0
+
+      - name: Test with coverage
+        run: npm run test:coverage
+
+      - name: Changed-lines coverage (diff-cover, 80%)
+        if: ${{ !contains(github.event.pull_request.labels.*.name, 'gate:changed-lines-exempt') }}
+        shell: bash
+        run: |
+          status=0
+          diff-cover coverage/cobertura-coverage.xml \
+            --compare-branch="origin/${{ github.base_ref }}" \
+            --fail-under=80 \
+            --format markdown:diff-cover.md || status=$?
+          cat diff-cover.md >> "$GITHUB_STEP_SUMMARY"
+          exit "$status"
+
+      - name: Record exemption
+        if: ${{ contains(github.event.pull_request.labels.*.name, 'gate:changed-lines-exempt') }}
+        run: echo "> Changed-lines coverage gate exempted by label gate:changed-lines-exempt — see the PR description for the reason." >> "$GITHUB_STEP_SUMMARY"
