@@ -2,13 +2,13 @@
 
 本仓库里的内容按两种许可发布。
 
-## 文档、模板（CC BY 4.0）
+## 文档（CC BY-NC 4.0）
 
-所有 `.md` 文档和 `templates/` 下的模板，按 [知识共享 署名 4.0 国际许可协议（CC BY 4.0）](https://creativecommons.org/licenses/by/4.0/deed.zh-hans) 发布。你可以复制、修改、用于商业用途，只需注明来源：阿布的研发 harness，https://github.com/PM-Shawn/abu-harness。
+`templates/` 和 `mechanisms/` 以外的所有 `.md` 文档，按 [知识共享 署名-非商业性使用 4.0 国际许可协议（CC BY-NC 4.0）](https://creativecommons.org/licenses/by-nc/4.0/deed.zh-hans) 发布。你可以复制、修改、转载，需要注明来源（阿布的研发 harness，https://github.com/PM-Shawn/abu-harness），并且不能用于商业用途。商业用途请先联系作者。
 
-## 脚本、钩子、配置（MIT）
+## 模板、脚本、钩子、配置（MIT）
 
-所有 `mechanisms/` 下的脚本、钩子、CI 配置和其他代码文件，按 MIT 许可发布。
+所有 `templates/` 下的模板和 `mechanisms/` 下的脚本、钩子、CI 配置及其他代码文件，按 MIT 许可发布，可以直接复制进你自己的项目，包括商业项目。
 
 ```
 MIT License
