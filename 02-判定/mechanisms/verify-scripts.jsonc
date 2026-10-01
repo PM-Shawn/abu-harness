@@ -1,5 +1,5 @@
 // 放在哪里：这是 package.json 的片段，把下面的字段合并进 <your-repo>/package.json（合并时去掉注释）。
-// 要装的依赖、前置配置（eslint.config.mjs、tsconfig.json、vitest.config.ts、.gitignore）和安装顺序见材料根目录的 INSTALL.md。
+// 要装的依赖、前置配置（eslint.config.mjs、tsconfig.json、vitest.config.ts、.gitignore）和安装顺序见模板仓库根目录的 INSTALL.md。
 //
 // 三个门禁命令的名字固定，Agent 的完成条件（例如 /goal 模板）直接写这几个名字：
 //   verify:quick  小步自检：lint + 类型检查 + 只跑有改动的测试，目标 30 秒内，不查覆盖率

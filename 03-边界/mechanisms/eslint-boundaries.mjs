@@ -28,7 +28,7 @@
 // 所以这里把所有导入限制集中在 appFiles 这一个配置对象里。
 // 别的配置块（例如 eslint.migration-list.mjs 的迁移名单）也要对 appFiles 里的文件写 no-restricted-imports 时，
 // 用 boundaryRestrictedPaths(...) 取出这里的限制列表传给它，由它合并后写一次。
-// 三个片段合用的完整写法见材料根目录的 INSTALL.md。
+// 三个片段合用的完整写法见模板仓库根目录的 INSTALL.md。
 
 const BROWSER_GLOBALS = [
   'window',

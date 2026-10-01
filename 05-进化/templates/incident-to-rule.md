@@ -25,7 +25,7 @@
 ```markdown
 ## 叠放 PR 合并纪律（【YYYY-MM-DD】事故后定）
 
-- 叠放 PR（base 是特性分支）不提前开 auto-merge：base 没有分支保护时，auto-merge 会立即合并。
+- 叠放 PR（base 是功能分支）不提前开 auto-merge：base 没有分支保护时，auto-merge 会立即合并。
   正确顺序：父 PR 合入集成分支 → 改子 PR 的 base → 把集成分支合进子分支 → 本机门禁 → push → 再开 auto-merge。
 ```
 

@@ -2,7 +2,7 @@
 
 在一个空的 Node 项目里，把各目录 `mechanisms/` 下的脚本、钩子以及 CI 配置装起来的顺序和命令。已有项目按同样的顺序做，跳过已经有的部分。步骤编号与 [README.md](README.md)“怎样开始”的六步相同。
 
-文中的路径都相对你的仓库根目录。材料里的文件用“目录/文件名”指明出处，例如 `02-判定/mechanisms/run-gate.sh`。
+文中的路径都相对你的仓库根目录。模板仓库里的文件用“目录/文件名”指明出处，例如 `02-判定/mechanisms/run-gate.sh`。
 
 ## 占位写法和固定名称
 
@@ -195,7 +195,7 @@ export default defineConfig({
 
 ### 3.4 package.json 的脚本
 
-把 `02-判定/mechanisms/verify-scripts.jsonc` 里的 `scripts` 和 `lint-staged` 两段合并进 `package.json`（去掉注释；`npm init -y` 生成的 `test` 脚本换成片段里的）。全材料的 workflow、钩子和模板引用的 npm 脚本名都以这个文件为准。
+把 `02-判定/mechanisms/verify-scripts.jsonc` 里的 `scripts` 和 `lint-staged` 两段合并进 `package.json`（去掉注释；`npm init -y` 生成的 `test` 脚本换成片段里的）。整个模板仓库的 workflow、钩子和模板引用的 npm 脚本名都以这个文件为准。
 
 ### 3.5 门禁脚本
 
@@ -209,7 +209,7 @@ export default defineConfig({
 chmod +x .husky/pre-commit
 ```
 
-全材料只有这一份 pre-commit。用了公开仓泄露检查时，去掉文件里 `npm run check:leak` 一行的注释。
+整个模板仓库只有这一份 pre-commit。用了公开仓泄露检查时，去掉文件里 `npm run check:leak` 一行的注释。
 
 ### 3.7 确认
 
@@ -295,13 +295,13 @@ git config core.hooksPath     # 输出 .husky/_
 
 ## 文件放置总表
 
-| 材料里的文件 | 放到仓库的哪里 | 说明 |
+| 模板仓库里的文件 | 放到你的仓库的哪里 | 说明 |
 |---|---|---|
 | `01-方向/mechanisms/CLAUDE.md` | `CLAUDE.md` | 与 `AGENTS.md` 并排 |
 | `01-方向/mechanisms/retired-command.mjs` | `scripts/retired-command.mjs` | 可选 |
 | `02-判定/mechanisms/verify-scripts.jsonc` | 合并进 `package.json` | npm 脚本名以它为准 |
 | `02-判定/mechanisms/run-gate.sh` | `scripts/run-gate.sh` | |
-| `02-判定/mechanisms/husky-pre-commit` | `.husky/pre-commit` | 全材料只有这一份 |
+| `02-判定/mechanisms/husky-pre-commit` | `.husky/pre-commit` | 整个模板仓库只有这一份 |
 | `02-判定/mechanisms/eslint-test-determinism.mjs` | `eslint-test-determinism.mjs` | 仓库根目录 |
 | `02-判定/mechanisms/ci-gate.yml` | `.github/workflows/ci.yml` | |
 | `02-判定/mechanisms/ci-gate.test.mjs` | `scripts/ci-gate.test.mjs` | |

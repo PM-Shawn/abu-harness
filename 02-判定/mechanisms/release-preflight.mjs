@@ -66,7 +66,7 @@ const pkg = readJson('package.json');
 const lock = readJson('package-lock.json');
 const versionSources = {
   'package.json': pkg.version,
-  // npm 在 lock 文件里有两处版本号；忘了改会让之后每次 npm install 都改动这两行，
+  // npm 在锁文件里有两处版本号；忘了改会让之后每次 npm install 都改动这两行，
   // 混进别人正在开的 PR
   'package-lock.json (root)': lock.version,
   'package-lock.json (packages[""])': lock.packages?.['']?.version,

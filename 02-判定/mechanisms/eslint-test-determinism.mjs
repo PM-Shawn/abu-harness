@@ -5,7 +5,7 @@
 // 用法（在 <your-repo>/eslint.config.mjs 里）：
 //   import { testDeterminismConfig } from './eslint-test-determinism.mjs';
 //   export default [ ...你原有的配置, testDeterminismConfig ];
-// 与 eslint-boundaries.mjs、eslint.migration-list.mjs 一起使用时的完整写法见材料根目录的 INSTALL.md。
+// 与 eslint-boundaries.mjs、eslint.migration-list.mjs 一起使用时的完整写法见模板仓库根目录的 INSTALL.md。
 //
 // 要改的地方：
 //   1. files：你的测试文件范围。范围以外的测试（例如 scripts/、e2e/ 下）不受约束，

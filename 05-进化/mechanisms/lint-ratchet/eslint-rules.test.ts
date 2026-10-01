@@ -2,7 +2,7 @@
 // 没有这个测试时，一次写错的正则或 glob 就能让规则悄悄失效，而 lint 仍然是绿的。
 //
 // 放在哪里：<your-repo>/scripts/eslint-rules.test.ts。它由 vitest 运行，
-// vitest 配置的 include 要包含 scripts/**/*.test.ts（写法见材料根目录的 INSTALL.md）。
+// vitest 配置的 include 要包含 scripts/**/*.test.ts（写法见模板仓库根目录的 INSTALL.md）。
 //
 // 要改的地方：
 // 1. MIGRATED / LEGACY：一个在迁移名单内、一个在名单外的虚拟文件路径（文件不需要真实存在，

@@ -1,5 +1,5 @@
 # 放在哪里：<your-repo>/.husky/pre-commit，放好后运行 chmod +x .husky/pre-commit。
-# 全材料只有这一份 pre-commit；其他机制要在提交前运行的检查，都加在这个文件里。
+# 整个模板仓库只有这一份 pre-commit；其他机制要在提交前运行的检查，都加在这个文件里。
 #
 # 钩子生效的前提：git config core.hooksPath 输出 .husky/_ 。
 #   - 这个设置和 .husky/_/ 目录由 package.json 的 "prepare": "husky" 在不带包名的 npm install / npm ci 时生成。

@@ -17,7 +17,7 @@
 //   testFiles、testSelectors  测试文件的范围和测试文件另有的 no-restricted-syntax 选择器
 //                        （用了 eslint-test-determinism.mjs 时传 testDeterminismConfig.files 和
 //                        TEST_DETERMINISM_SELECTORS），名单内的测试文件会同时受两组选择器约束。
-// 三者合用的完整写法见材料根目录的 INSTALL.md。
+// 三者合用的完整写法见模板仓库根目录的 INSTALL.md。
 //
 // 要改的地方：
 //   1. MIGRATED_FILES 的初始内容；

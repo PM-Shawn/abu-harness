@@ -1,6 +1,6 @@
 // vitest.config.ts 里覆盖率阈值的写法（片段）。
 // 放在哪里：把 test.coverage 这一段合并进 <your-repo>/vitest.config.ts
-// （含 include、exclude 的完整 vitest.config.ts 见材料根目录的 INSTALL.md）。
+// （含 include、exclude 的完整 vitest.config.ts 见模板仓库根目录的 INSTALL.md）。
 //
 // 规则：
 // 1. 阈值只写在这一个地方，文档里不重复具体数字。
