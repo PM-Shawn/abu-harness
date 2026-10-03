@@ -21,7 +21,7 @@
 
 - [ ] 把版本号改成 `X.Y.Z`，下列文件全部改到同一个值：
   - `package.json`
-  - `package-lock.json` 的两个 version 字段：改完 `package.json` 后运行 `npm install --package-lock-only`，应只有 2 行变化、没有依赖变化
+  - `package-lock.json` 的两个 version 字段：修改完 `package.json` 后运行 `npm install --package-lock-only`，应只有 2 行变化、没有依赖变化
   - `【其他写版本号的文件】`
 - [ ] 更新日志写上本版内容：`CHANGELOG.md` 里加一节二级标题 `## vX.Y.Z`，内容不能为空。
   - 多语言更新日志：每种语言一个文件（例如 `CHANGELOG.md` 全英文、`CHANGELOG.【语言代码】.md` 用另一种语言），同一版本号、同一结构，每个文件只用一种语言。

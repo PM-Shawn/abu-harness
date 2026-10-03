@@ -1,6 +1,6 @@
 # 安装说明
 
-在一个空的 Node 项目里，把各目录 `mechanisms/` 下的脚本、钩子以及 CI 配置装起来的顺序和命令。已有项目按同样的顺序做，跳过已经有的部分。步骤编号与 [README.md](README.md)“怎样开始”的六步相同。
+这份说明写的是在一个空的 Node 项目里，把各目录 `mechanisms/` 下的脚本、钩子以及 CI 配置安装起来的顺序和命令。已有项目按同样的顺序做，跳过已经有的部分。步骤编号与 [README.md](README.md)“怎样开始”的六步相同。
 
 文中的路径都相对你的仓库根目录。模板仓库里的文件用“目录/文件名”指明出处，例如 `02-判定/mechanisms/run-gate.sh`。
 
@@ -41,7 +41,7 @@
 
 ## 开始之前
 
-需要这几样工具。
+你需要先装好这几样工具。
 
 | 工具 | 用在哪里 |
 |---|---|
@@ -66,7 +66,7 @@ npm init -y
 
 ## 第 2 步 拦截钩子
 
-只对这个项目生效的装法：
+只对这个项目生效的安装办法：
 
 1. `03-边界/mechanisms/claude-code-guard/guard.py` 和 `guard_test.py` 复制到 `.claude/hooks/`。
 2. `03-边界/mechanisms/claude-code-guard/settings.snippet.json` 的内容合并进 `.claude/settings.json`，把其中的命令改成：
@@ -83,7 +83,7 @@ npm init -y
 
    41 个用例全部 PASS，退出码 0。
 
-对本机全部项目生效的装法：两个文件放到 `~/.claude/hooks/`，配置片段原样合并进 `~/.claude/settings.json`。
+对本机全部项目生效的安装办法：两个文件放到 `~/.claude/hooks/`，配置片段原样合并进 `~/.claude/settings.json`。
 
 钩子拦不住的写法、Codex 侧的放行表，见[边界](03-边界/README.md)的“不用 git 回滚”和“Agent 工具的放行配置”。
 
@@ -162,7 +162,7 @@ export default [
 ];
 ```
 
-配置块的先后顺序不能换：同一个文件命中多个配置块时，后面的 `no-restricted-imports`、`no-restricted-syntax` 会整条替换前面的。
+配置块的先后顺序不能调换：同一个文件命中多个配置块时，后面的 `no-restricted-imports`、`no-restricted-syntax` 会整条替换前面的。
 
 `vitest.config.ts`：
 
@@ -230,7 +230,7 @@ git status --porcelain              # 提交之后再运行门禁，输出为空
 4. 提交之后建集成分支并把两条分支都推送上去：`git switch -c dev`，`git push origin main dev`。
 5. 在 GitHub 仓库 Settings → Branches 里给 `dev` 和 `main` 建分支保护，把 `check` 登记为必需检查，并打开“管理员也不能绕过”。
 
-往 `check` 里增加或删除 job 时，`ci.yml` 的 `needs`、`RESULTS` 和 `scripts/ci-gate.test.mjs` 的 `GATE_JOBS` 要一起改；只作参考的 job 登记进 `ADVISORY_JOBS`。每个 CI 片段文件的开头都写了自己要改哪几处。
+往 `check` 里增加或删除 job 时，`ci.yml` 的 `needs`、`RESULTS` 和 `scripts/ci-gate.test.mjs` 的 `GATE_JOBS` 要一起修改；只作参考的 job 登记进 `ADVISORY_JOBS`。每个 CI 片段文件的开头都写了自己要改哪几处。
 
 ### 4.2 发版预检
 
@@ -315,7 +315,7 @@ git config core.hooksPath     # 输出 .husky/_
 | `03-边界/mechanisms/claude-code-guard/guard.py`、`guard_test.py` | `.claude/hooks/` 或 `~/.claude/hooks/` | |
 | `03-边界/mechanisms/claude-code-guard/settings.snippet.json` | 合并进 `.claude/settings.json` 或 `~/.claude/settings.json` | JSON：项目级安装时把命令里的路径改成 `$CLAUDE_PROJECT_DIR/.claude/hooks/guard.py` |
 | `03-边界/mechanisms/claude-permissions.snippet.json` | 合并进 `.claude/settings.json` | JSON：Claude Code 项目级放行列表；`Bash(npm run *)` 会放行全部 npm 脚本，按需收窄 |
-| `03-边界/mechanisms/codex-default.rules.example` | `~/.codex/rules/default.rules` | 只复制 `prefix_rule` 行 |
+| `03-边界/mechanisms/codex-default.rules.example` | `~/.codex/rules/default.rules` | 整份复制，注释行 Codex 会忽略 |
 | `03-边界/mechanisms/gitignore.snippet` | 追加到 `.gitignore` | |
 | `03-边界/mechanisms/eslint-boundaries.mjs` | `eslint-boundaries.mjs` | 仓库根目录 |
 | `03-边界/mechanisms/check-nul-bytes.py` | `scripts/check-nul-bytes.py` | 可选 |

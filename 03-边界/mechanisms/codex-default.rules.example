@@ -1,19 +1,20 @@
-# Codex 命令放行表示例。
-# 放在哪里：~/.codex/rules/default.rules。只复制下面的 prefix_rule 行，按需增删。
-# 作者本机的 default.rules 里全部是 prefix_rule 行，没有注释行；带 # 的注释行没有在 Codex CLI 上验证过，
-# 所以这些说明文字不要一起复制进去。行格式取自作者 2026-09 使用的 Codex CLI 自动生成的文件，
-# 你的版本生成的格式不同时，以你本机 default.rules 里已有的行为准。
+# Codex 命令规则示例。
+# 放在哪里：~/.codex/rules/default.rules。整份文件可以直接复制，# 开头的注释行 Codex 会忽略。
 #
 # 每行一条 prefix_rule：命令的开头几个词与 pattern 完全相同时，按 decision 处理。
-# 作者的实际放行表是在日常使用中逐条点“总是允许”积累起来的，全部是 allow。
+# decision 有三种：allow 直接执行，prompt 每次先询问，forbidden 拒绝执行。
+# pattern 里某一位可以写成列表，表示这一位是其中任意一个词。
+# justification 是可选的一句说明，写给以后看这条规则的人。
 #
-# 建议只放行只读或只影响本机工作区的命令。
-# 提交、推送、合并 PR、写 /tmp 之类的命令不要放进来，让 Codex 按你的审批设置先询问；
-# 否则“不自动提交推送”“不读写 /tmp”这些规则在 Codex 侧就只靠模型自觉。
+# 改完后怎样确认规则写对了（不会真的执行后面的命令，只输出这条命令会得到哪个决定）：
+#   codex execpolicy check --rules ~/.codex/rules/default.rules git status
+#   codex execpolicy check --rules ~/.codex/rules/default.rules git push origin main
+# 输出里的 "decision" 就是结果；"matchedRules" 为空表示没有规则管到它，Codex 按你的审批设置处理。
 #
-# 改完后怎样确认生效：重新启动 Codex，让它运行一条表里的命令（例如 git status），不再询问；
-# 再让它运行一条表外的命令（例如 git push），仍然询问。
+# 规则只比较命令开头的几个词。git -C 某目录 reset 这类把参数插在前面的写法、
+# 包在 bash -c 里的命令、读写 /tmp 的各种写法，prefix_rule 管不到，这些仍然要写进项目手册。
 
+# 一、放行：只读命令和本地门禁命令
 prefix_rule(pattern=["git", "status"], decision="allow")
 prefix_rule(pattern=["git", "diff"], decision="allow")
 prefix_rule(pattern=["git", "log"], decision="allow")
@@ -24,3 +25,12 @@ prefix_rule(pattern=["gh", "auth", "status"], decision="allow")
 prefix_rule(pattern=["npm", "run", "verify"], decision="allow")
 prefix_rule(pattern=["npm", "run", "lint"], decision="allow")
 prefix_rule(pattern=["npm", "test"], decision="allow")
+
+# 二、每次先询问：会产生对外影响的命令
+prefix_rule(pattern=["git", "commit"], decision="prompt")
+prefix_rule(pattern=["git", "push"], decision="prompt")
+prefix_rule(pattern=["gh", "pr", ["create", "merge"]], decision="prompt")
+
+# 三、拒绝执行：用 git 丢弃改动的命令
+prefix_rule(pattern=["git", ["reset", "restore", "revert", "stash", "clean"]], decision="forbidden", justification="需要恢复时用文件编辑工具手动改回")
+prefix_rule(pattern=["git", "checkout", "--"], decision="forbidden", justification="需要恢复时用文件编辑工具手动改回")
